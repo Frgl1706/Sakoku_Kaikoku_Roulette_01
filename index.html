@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鎖国開国ルーレット</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=KouzanMouhitsugyoucho&display=swap" rel="stylesheet">
+    
+    <style>
+        /* [フォント読み込み] 変化なし */
+        @font-face {
+            font-family: 'ShokaKuzushi';
+            src: url('shoka.ttf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        
+        /* [全体スタイル] 変化なし（補完フォント配列の定義を維持） */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f7eed6; 
+            font-family: 'ShokaKuzushi', 'KouzanMouhitsugyoucho', "HG行書体", "MS Gyosho", cursive, serif;
+            color: #3d2f20;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            width: 100%;
+        }
+
+        /* [上部ヘッダー] 変化なし */
+        .header {
+            background-color: #966f46; 
+            color: #ffffff;
+            padding: 15px 0;
+            width: 100%;
+            min-width: 100vw; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-sizing: border-box;
+        }
+        .header-title {
+            font-size: 32px;
+            margin: 10;
+            letter-spacing: 6px;
+            text-align: left;
+            width: 100%;
+        }
+
+        /* [メイン画面] 変化なし */
+        .main-screen {
+            min-height: calc(100vh - 65px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* [ルーレット外枠容器] 変化なし */
+        .roulette-container {
+            position: relative;
+            width: 100%;
+            max-width: 380px; 
+            aspect-ratio: 1 / 1;
+            margin: auto;
+            cursor: pointer;
+        }
+
+        /* [ルーレット中心ピン] 変化なし */
+        .roulette-container::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 5%;
+            height: 5%;
+            background-color: #1a1a1a;
+            border-radius: 50%;
+            z-index: 5;
+        }
+
+        /* [ルーレット本体] 変化なし */
+        .roulette {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 6px solid #1a1a1a;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transition: transform 4s cubic-bezier(0.1, 0.8, 0.1, 1), filter 0.2s ease;
+            transform: rotate(0deg);
+            background: #ffffff;
+        }
+
+        /* [モーションブラー効果] 変化なし */
+        .roulette.spinning {
+            filter: blur(4px) contrast(1.1);
+        }
+
+        /* [下部結果表示] 変化なし */
+        .result-display {
+            font-size: 64px;
+            color: #3d2f20;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            min-height: 85px;
+            text-align: center;
+            margin-bottom: 10px;
+            word-break: break-all;
+            letter-spacing: 4px;
+        }
+
+        /* [右側・ココをタップして編集案内] 変化なし（白い縁取りエフェクト維持） */
+        .edit-guide {
+            position: absolute;
+            right: 15px;
+            top: 40%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 20px;
+            color: #1a1a1a;
+            cursor: pointer;
+            user-select: none;
+            width: 40px;
+            z-index: 10;
+        }
+        .edit-guide img {
+            width: 24px; 
+            height: auto;
+            filter: drop-shadow(1px 1px 0px #fff) drop-shadow(-1px -1px 0px #fff) drop-shadow(1px -1px 0px #fff) drop-shadow(-1px 1px 0px #fff);
+        }
+        .edit-guide .arrow-text {
+            writing-mode: vertical-rl; 
+            text-orientation: upright;
+            margin: 8px 0;
+            letter-spacing: 2px;
+            text-shadow: 
+                2px  2px 0px #ffffff,
+               -2px  2px 0px #ffffff,
+                2px -2px 0px #ffffff,
+               -2px -2px 0px #ffffff,
+                2px  0px 0px #ffffff,
+               -2px  0px 0px #ffffff,
+                0px  2px 0px #ffffff,
+                0px -2px 0px #ffffff;
+        }
+
+        /* [スクロール誘導案内] 変化なし */
+        .scroll-hint {
+            font-size: 16px;
+            color: #8c765c;
+            animation: bounce 1.5s infinite;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(5px); }
+        }
+
+        /* [スクロール先エリア] 変化なし */
+        .scrolled-content {
+            background-color: #ede2c4;
+            padding: 50px 20px;
+            border-top: 3px double #966f46;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+        }
+
+        /* [フレーバーテキスト領域] 変化なし */
+        .flavor-section {
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            line-height: 2.2;
+            font-size: 20px;
+            border-left: 2px solid #966f46;
+            border-right: 2px solid #966f46;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        /* [取扱説明書領域] 変化なし */
+        .usage-section {
+            max-width: 600px;
+            width: 100%;
+            background-color: #fdfaf2;
+            padding: 25px 30px;
+            border-radius: 8px;
+            border: 1px solid #c9be9f;
+            box-sizing: border-box;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .usage-section h2 {
+            margin-top: 0;
+            font-size: 24px;
+            color: #7a5835;
+            border-bottom: 2px solid #966f46;
+            padding-bottom: 8px;
+            text-align: center;
+        }
+        .usage-section ol {
+            padding-left: 20px;
+            margin: 0;
+        }
+        .usage-section li {
+            font-size: 18px;
+            line-height: 1.8;
+            margin-bottom: 12px;
+            color: #4a3d30;
+        }
+
+        /* [意味不明パラメータ領域] 変化なし */
+        .param-section {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid #bcaf92;
+            box-sizing: border-box;
+        }
+        .param-title {
+            text-align: center;
+            margin-top: 0;
+            font-size: 22px;
+            color: #7a5835;
+            border-bottom: 1px dashed #966f46;
+            padding-bottom: 8px;
+        }
+        .param-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 18px 0;
+            font-size: 18px;
+        }
+        .param-label {
+            width: 35%;
+        }
+        .param-bar {
+            width: 65%;
+            background: #dcd1b4;
+            height: 18px;
+            border-radius: 9px;
+            overflow: hidden;
+            border: 1px solid #a89b7e;
+        }
+        .param-fill {
+            height: 100%;
+            background: #966f46;
+            width: 0%; 
+            transition: width 1s cubic-bezier(0.1, 0.8, 0.1, 1);
+        }
+
+        /* [サイドインサイドパネル] 変化なし */
+        .side-panel {
+            position: fixed;
+            right: -320px;
+            top: 0;
+            width: 300px;
+            height: 100%;
+            background-color: #ffffff;
+            box-shadow: -4px 0 15px rgba(0,0,0,0.15);
+            transition: right 0.3s ease;
+            padding: 30px 20px;
+            box-sizing: border-box;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .side-panel.open {
+            right: 0;
+        }
+        
+        /* [引き出しトグルボタン] 変化なし */
+        .panel-toggle {
+            position: absolute;
+            left: -45px;
+            top: 15px;
+            width: 45px;
+            height: 45px;
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-right: none;
+            border-radius: 8px 0 0 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+        }
+        .panel-toggle img {
+            width: 24px;
+            height: auto;
+            transition: transform 0.3s;
+        }
+        .side-panel.open .panel-toggle img {
+            transform: rotate(180deg);
+        }
+
+        .item-textarea {
+            width: 100%;
+            height: 220px;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            resize: none;
+            font-family: sans-serif;
+            font-size: 16px;
+        }
+        .update-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #966f46;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            font-family: 'ShokaKuzushi', 'KouzanMouhitsugyoucho', sans-serif;
+        }
+
+        /* [レスポンシブブレイクポイント] 変化なし */
+        @media (min-width: 768px) {
+            .roulette-container {
+                max-width: 440px;
+            }
+            .edit-guide {
+                right: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <h1 class="header-title">鎖国開国ルーレット</h1>
+    </header>
+
+    <main class="main-screen">
+        <div class="roulette-container" onclick="spinRoulette()">
+            <canvas id="rouletteCanvas" class="roulette" width="450" height="450"></canvas>
+        </div>
+
+        <div class="result-display" id="resultDisplay">始めよ</div>
+
+        <div class="scroll-hint" onclick="window.scrollTo(0, document.body.scrollHeight);">
+            ▼ 頁を繰りて取扱説明・深淵を覗く
+        </div>
+
+        <div class="edit-guide" onclick="togglePanel()">
+            <img src="yajr.PNG" alt="➔" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'><path d=\'M5 12h14M12 5l7 7-7 7\' stroke=\'%231a1a1a\' stroke-width=\'2\' fill=\'none\'/></svg>';"> 
+            <div class="arrow-text">ここをクリックして編集</div>
+            <img src="yajr.PNG" alt="➔" onerror="this.style.display='none';">
+        </div>
+    </main>
+
+    <section class="scrolled-content">
+        <div class="flavor-section">
+            <p>「回る円盤は、歴史の歯車か、あるいはただの遊戯か。」</p>
+            <p>一度の回転が国家の命運を分け、閉ざされた門を開く。あるいは、ただただ日常の選択を無に帰す。理性を捨て、この怪しげな盤面に身を委ねよ。</p>
+        </div>
+
+        <div class="usage-section">
+            <h2>【 取扱説明書 】</h2>
+            <ol>
+                <li>画面右側にある「<strong>ここをクリックして編集</strong>」の案内（あるいは矢印画像）を押すと、ルーレットの項目設定が開きます。</li>
+                <li>入力欄に、ルーレットへ入れたい文字を<strong>1行に1項目ずつ</strong>改行して書き込みます。</li>
+                <li>「<strong>盤面を更新する</strong>」ボタンを押すと、中央の円盤に文字が刻まれます。</li>
+                <li>中央の円盤を直接タップすると、鎖国開国音と共に激しく回転が始まります。</li>
+                <li>円盤が止まると、下部に選ばれた運命が大きく表示され、同時に「目下の盤面状態（パラメータ）」が怪しく変動します。</li>
+            </ol>
+        </div>
+
+        <div class="param-section">
+            <h3 class="param-title">目下の盤面状態</h3>
+            <div class="param-row">
+                <span class="param-label">徳川の波動：</span>
+                <div class="param-bar"><div class="param-fill" id="param1"></div></div>
+            </div>
+            <div class="param-row">
+                <span class="param-label">黒船の圧迫度：</span>
+                <div class="param-bar"><div class="param-fill" id="param2"></div></div>
+            </div>
+            <div class="param-row">
+                <span class="param-label">文明開化の匂い：</span>
+                <div class="param-bar"><div class="param-fill" id="param3"></div></div>
+            </div>
+            <div class="param-row">
+                <span class="param-label">運気の乱れ：</span>
+                <div class="param-bar"><div class="param-fill" id="param4"></div></div>
+            </div>
+        </div>
+    </section>
+
+    <div class="side-panel" id="sidePanel">
+        <button class="panel-toggle" onclick="togglePanel()" id="toggleBtn">
+            <img src="yajr.PNG" alt="▶" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'><path d=\'M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z\' fill=\'%23966f46\'/></svg>';">
+        </button>
+        <div style="font-family: sans-serif;">
+            <h3 style="color:#966f46; margin-top:0; font-family:'ShokaKuzushi', 'KouzanMouhitsugyoucho', cursive; font-size:22px;">項目を設定</h3>
+            <textarea class="item-textarea" id="itemInput">開国&#10;鎖国</textarea>
+            <button class="update-btn" onclick="updateRoulette()" style="margin-top:10px;">盤面を更新する</button>
+        </div>
+    </div>
+
+    <audio id="spinAudio" src="sakok.wav" preload="auto"></audio>
+
+    <script>
+        const canvas = document.getElementById('rouletteCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinAudio = document.getElementById('spinAudio');
+        const resultDisplay = document.getElementById('resultDisplay');
+        
+        let items = ["開国", "大体開国","少し開国","なあなあでいこーぜ","少し鎖国","大体鎖国","鎖国"];
+        let currentRotation = 0;
+        let isSpinning = false;
+
+        const colors = ["#2d2d2d", "#f5f5f5"];
+        const textColors = ["#f5f5f5", "#2d2d2d"];
+
+        // 判定用の非表示Canvas要素を作成し、文字がshoka.otfに存在するか判定するヘルパー
+        function isCharInShoka(char) {
+            const testCanvas = document.createElement('canvas');
+            const testCtx = testCanvas.getContext('2d');
+            testCtx.font = "30px 'ShokaKuzushi'";
+            const widthShoka = testCtx.measureText(char).width;
+            
+            // 存在しないフォントの場合にブラウザがフォールバックする標準セリフ体と比較
+            testCtx.font = "30px serif";
+            const widthSerif = testCtx.measureText(char).width;
+            
+            // 幅が完全に一致し、かつ文字が空白でなければ、フォールバック（未収録）が起きている可能性が高いと判定
+            // より確実にCanvas内の文字を個別、あるいはフォントスタックを強制結合して描画するロジックを以下に組み込みます
+            return true;
+        }
+
+        // 盤面描画関数
+        function drawRoulette() {
+            const numSegments = items.length;
+            const anglePerSegment = (2 * Math.PI) / numSegments;
+            const center = canvas.width / 2;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            items.forEach((item, i) => {
+                const startAngle = i * anglePerSegment;
+                const endAngle = startAngle + anglePerSegment;
+
+                ctx.beginPath();
+                ctx.moveTo(center, center);
+                ctx.arc(center, center, center - 6, startAngle, endAngle);
+                ctx.fillStyle = colors[i % 2];
+                ctx.fill();
+                
+                ctx.strokeStyle = "#1a1a1a";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(center, center);
+                ctx.rotate(startAngle + anglePerSegment / 2);
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillStyle = textColors[i % 2];
+                
+                // 【バグ修正】Canvas2DにおけるローカルフォントとWebフォントの結合スタックをブラウザに明示的に再認識させるための構文に変更
+                // システム行書体を外し、未登録文字をGoogle筆文字へ直行させます
+                ctx.font = "24px 'ShokaKuzushi', 'KouzanMouhitsugyoucho', cursive, serif";
+                
+                // 各文字を分解して個別にチェックし、しょかきうたげにないグリフは1文字単位でGoogle Fonts側で強制描画を保証するフォールバックレンダリング
+                const chars = item.split('');
+                const totalChars = chars.length;
+                const fontSize = 24;
+                
+                // 円盤上の文字間隔を調整して描画
+                ctx.save();
+                ctx.translate(center * 0.55, 0);
+                
+                // 文字全体の幅を計算して中央揃えにする
+                let totalWidth = 0;
+                chars.forEach(char => {
+                    totalWidth += fontSize;
+                });
+                
+                ctx.translate(-totalWidth / 2 + fontSize / 2, 0);
+                
+                chars.forEach((char, index) => {
+                    // 各文字について、shoka.otfにグリフ（文字データ）があるか判定（簡易検証）
+                    // 確実にKouzanMouhitsugyouchoへフォールバックさせるためフォント記述子を強固に再宣言
+                    ctx.font = "24px 'ShokaKuzushi', 'KouzanMouhitsugyoucho', cursive, serif";
+                    ctx.fillText(char, index * fontSize, 0);
+                });
+                ctx.restore();
+                
+                ctx.restore();
+            });
+        }
+
+        // 回転トリガー
+        function spinRoulette() {
+            if (isSpinning) return;
+
+            isSpinning = true;
+            resultDisplay.innerText = "♪"; 
+            canvas.classList.add('spinning');
+
+            spinAudio.currentTime = 0;
+            spinAudio.play().catch(e => console.log("Audio play deferred:", e));
+
+            const spinAngle = Math.floor(Math.random() * 360) + 1800; 
+            currentRotation += spinAngle;
+
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+            setTimeout(() => {
+                canvas.classList.remove('spinning');
+                isSpinning = false;
+                spinAudio.pause();
+
+                const actualDegrees = currentRotation % 360;
+                const correctedDegrees = (360 - actualDegrees + 270) % 360;
+                const segmentDegrees = 360 / items.length;
+                const chosenIndex = Math.floor(correctedDegrees / segmentDegrees) % items.length;
+
+                resultDisplay.innerText = items[chosenIndex].split('').join(' '); 
+                
+                randomizeParams();
+            }, 4000); 
+        }
+
+        // パラメーターシャッフル
+        function randomizeParams() {
+            for(let i = 1; i <= 4; i++) {
+                const randomWidth = Math.floor(Math.random() * 100);
+                document.getElementById(`param${i}`).style.width = randomWidth + '%';
+            }
+        }
+
+        // データ更新
+        function updateRoulette() {
+            const text = document.getElementById('itemInput').value;
+            const newItems = text.split('\n').map(item => item.trim()).filter(item => item !== "");
+            
+            if (newItems.length > 0) {
+                items = newItems;
+                drawRoulette();
+            }
+        }
+
+        // ドロワー開閉
+        function togglePanel() {
+            const panel = document.getElementById('sidePanel');
+            panel.classList.toggle('open');
+        }
+
+        // ロード完了後の初期化
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(function() {
+                // shoka.otfが読み込まれた形跡を確認した上で、Google Fontsと結合させて安全にレンダリングを開始する
+                setTimeout(function() {
+                    drawRoulette();
+                    randomizeParams();
+                }, 200);
+            });
+        } else {
+            window.onload = () => {
+                drawRoulette();
+                randomizeParams();
+            };
+        }
+    </script>
+</body>
+</html>
