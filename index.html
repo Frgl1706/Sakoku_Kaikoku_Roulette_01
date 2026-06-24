@@ -3,57 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>鎖国開国ルーレット</title>
+    <title>鎖国開国ルーレット 2.0</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=KouzanMouhitsugyoucho&display=swap" rel="stylesheet">
     
     <style>
-        /* [フォント読み込み] 変化なし */
+        /* フォント定義 */
         @font-face {
             font-family: 'ShokaKuzushi';
             src: url('shoka.ttf') format('opentype');
             font-weight: normal;
             font-style: normal;
+            font-display: swap;
         }
         
-        /* [全体スタイル] 変化なし（補完フォント配列の定義を維持） */
+        :root {
+            --bg-main: #f7eed6;
+            --color-primary: #966f46;
+            --color-dark: #3d2f20;
+            --color-black: #1a1a1a;
+            --font-stack: 'ShokaKuzushi', 'KouzanMouhitsugyoucho', "HG行書体", "MS Gyosho", serif;
+        }
+
         body {
             margin: 0;
             padding: 0;
-            background-color: #f7eed6; 
-            font-family: 'ShokaKuzushi', 'KouzanMouhitsugyoucho', "HG行書体", "MS Gyosho", cursive, serif;
-            color: #3d2f20;
+            background-color: var(--bg-main); 
+            font-family: var(--font-stack);
+            color: var(--color-dark);
             overflow-x: hidden;
             scroll-behavior: smooth;
             width: 100%;
         }
 
-        /* [上部ヘッダー] 変化なし */
+        /* フォーカス時のアクセシビリティ強化 */
+        *:focus-visible {
+            outline: 3px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+
+        /* ヘッダー */
         .header {
-            background-color: #966f46; 
+            background-color: var(--color-primary); 
             color: #ffffff;
             padding: 15px 0;
-            width: 100%;
-            min-width: 100vw; 
+            text-align: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             position: sticky;
             top: 0;
             z-index: 50;
-            box-sizing: border-box;
         }
         .header-title {
             font-size: 32px;
-            margin: 10;
+            margin: 0;
             letter-spacing: 6px;
-            text-align: left;
-            width: 100%;
         }
 
-        /* [メイン画面] 変化なし */
+        /* トースト通知 */
+        .toast-notification {
+            position: fixed;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--color-dark);
+            color: var(--bg-main);
+            padding: 12px 35px;
+            border-radius: 0 0 8px 8px;
+            font-size: 18px;
+            z-index: 200;
+            transition: top 0.4s cubic-bezier(0.1, 0.8, 0.1, 1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid #c9be9f;
+            border-top: none;
+            letter-spacing: 2px;
+        }
+        .toast-notification.show {
+            top: 68px;
+        }
+
+        /* メイン画面 */
         .main-screen {
-            min-height: calc(100vh - 65px);
+            min-height: calc(100vh - 68px);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -63,155 +95,184 @@
             position: relative;
         }
 
-        /* [ルーレット外枠容器] 変化なし */
-        .roulette-container {
+        /* ミュートボタン（セマンティック化・洗練） */
+        .mute-control {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            z-index: 15;
+            background: #ffffff;
+            border: 2px solid var(--color-primary);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .mute-control:hover {
+            background-color: #fdfaf2;
+            transform: scale(1.05);
+        }
+        .mute-control svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--color-primary);
+        }
+
+        /* ルーレットコンテナ（ボタン化してアクセシビリティ対応） */
+        .roulette-button {
+            background: none;
+            border: none;
+            padding: 0;
+            margin: auto;
+            cursor: pointer;
             position: relative;
             width: 100%;
             max-width: 380px; 
             aspect-ratio: 1 / 1;
-            margin: auto;
-            cursor: pointer;
+            display: block;
+            border-radius: 50%;
         }
 
-        /* [ルーレット中心ピン] 変化なし */
-        .roulette-container::after {
+        .roulette-button::after {
             content: '';
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 5%;
-            height: 5%;
-            background-color: #1a1a1a;
+            width: 6%;
+            height: 6%;
+            background-color: var(--color-black);
             border-radius: 50%;
             z-index: 5;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
 
-        /* [ルーレット本体] 変化なし */
         .roulette {
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            border: 6px solid #1a1a1a;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            border: 6px solid var(--color-black);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.18);
             transition: transform 4s cubic-bezier(0.1, 0.8, 0.1, 1), filter 0.2s ease;
             transform: rotate(0deg);
             background: #ffffff;
+            box-sizing: border-box;
         }
 
-        /* [モーションブラー効果] 変化なし */
         .roulette.spinning {
-            filter: blur(4px) contrast(1.1);
+            filter: blur(3px) contrast(1.1);
         }
 
-        /* [下部結果表示] 変化なし */
+        /* 結果表示（読み上げ対応） */
         .result-display {
             font-size: 64px;
-            color: #3d2f20;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            color: var(--color-dark);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
             min-height: 85px;
             text-align: center;
             margin-bottom: 10px;
             word-break: break-all;
             letter-spacing: 4px;
+            font-weight: bold;
         }
 
-        /* [右側・ココをタップして編集案内] 変化なし（白い縁取りエフェクト維持） */
+        /* 案内テキスト（白い縁取り・洗練） */
         .edit-guide {
             position: absolute;
-            right: 15px;
-            top: 40%;
+            right: 20px;
+            top: 45%;
             transform: translateY(-50%);
+            background: none;
+            border: none;
+            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             font-size: 20px;
-            color: #1a1a1a;
+            color: var(--color-black);
             cursor: pointer;
-            user-select: none;
-            width: 40px;
+            width: 44px;
             z-index: 10;
+            font-family: var(--font-stack);
         }
         .edit-guide img {
-            width: 24px; 
+            width: 26px; 
             height: auto;
             filter: drop-shadow(1px 1px 0px #fff) drop-shadow(-1px -1px 0px #fff) drop-shadow(1px -1px 0px #fff) drop-shadow(-1px 1px 0px #fff);
         }
         .edit-guide .arrow-text {
             writing-mode: vertical-rl; 
             text-orientation: upright;
-            margin: 8px 0;
-            letter-spacing: 2px;
+            margin: 10px 0;
+            letter-spacing: 3px;
+            font-weight: bold;
             text-shadow: 
-                2px  2px 0px #ffffff,
-               -2px  2px 0px #ffffff,
-                2px -2px 0px #ffffff,
-               -2px -2px 0px #ffffff,
-                2px  0px 0px #ffffff,
-               -2px  0px 0px #ffffff,
-                0px  2px 0px #ffffff,
-                0px -2px 0px #ffffff;
+                2px 2px 0 #fff, -2px 2px 0 #fff, 2px -2px 0 #fff, -2px -2px 0 #fff,
+                2px 0px 0 #fff, -2px 0px 0 #fff, 0px 2px 0 #fff, 0px -2px 0 #fff;
         }
 
-        /* [スクロール誘導案内] 変化なし */
+        /* スクロール案内 */
         .scroll-hint {
             font-size: 16px;
             color: #8c765c;
+            background: none;
+            border: none;
+            font-family: var(--font-stack);
+            cursor: pointer;
             animation: bounce 1.5s infinite;
             margin-top: 5px;
-            cursor: pointer;
+            padding: 5px;
         }
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(5px); }
+            50% { transform: translateY(6px); }
         }
 
-        /* [スクロール先エリア] 変化なし */
+        /* スクロールコンテンツ */
         .scrolled-content {
             background-color: #ede2c4;
             padding: 50px 20px;
-            border-top: 3px double #966f46;
+            border-top: 4px double var(--color-primary);
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 40px;
         }
 
-        /* [フレーバーテキスト領域] 変化なし */
         .flavor-section {
             max-width: 600px;
             width: 100%;
             text-align: center;
             line-height: 2.2;
             font-size: 20px;
-            border-left: 2px solid #966f46;
-            border-right: 2px solid #966f46;
+            border-left: 2px solid var(--color-primary);
+            border-right: 2px solid var(--color-primary);
             padding: 0 20px;
             box-sizing: border-box;
         }
 
-        /* [取扱説明書領域] 変化なし */
         .usage-section {
             max-width: 600px;
             width: 100%;
             background-color: #fdfaf2;
-            padding: 25px 30px;
-            border-radius: 8px;
+            padding: 30px;
+            border-radius: 12px;
             border: 1px solid #c9be9f;
             box-sizing: border-box;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.06);
         }
         .usage-section h2 {
             margin-top: 0;
             font-size: 24px;
             color: #7a5835;
-            border-bottom: 2px solid #966f46;
+            border-bottom: 2px solid var(--color-primary);
             padding-bottom: 8px;
             text-align: center;
-        }
-        .usage-section ol {
-            padding-left: 20px;
-            margin: 0;
         }
         .usage-section li {
             font-size: 18px;
@@ -220,22 +281,23 @@
             color: #4a3d30;
         }
 
-        /* [意味不明パラメータ領域] 変化なし */
+        /* パラメーターセクション */
         .param-section {
             max-width: 500px;
             width: 100%;
-            background: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.75);
             padding: 25px;
-            border-radius: 8px;
+            border-radius: 12px;
             border: 1px solid #bcaf92;
             box-sizing: border-box;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
         .param-title {
             text-align: center;
             margin-top: 0;
             font-size: 22px;
             color: #7a5835;
-            border-bottom: 1px dashed #966f46;
+            border-bottom: 1px dashed var(--color-primary);
             padding-bottom: 8px;
         }
         .param-row {
@@ -247,6 +309,7 @@
         }
         .param-label {
             width: 35%;
+            font-weight: bold;
         }
         .param-bar {
             width: 65%;
@@ -258,48 +321,45 @@
         }
         .param-fill {
             height: 100%;
-            background: #966f46;
+            background: var(--color-primary);
             width: 0%; 
-            transition: width 1s cubic-bezier(0.1, 0.8, 0.1, 1);
+            transition: width 1.2s cubic-bezier(0.1, 0.8, 0.1, 1);
         }
 
-        /* [サイドインサイドパネル] 変化なし */
+        /* 引き出しサイドパネル（モダン和モダン化） */
         .side-panel {
             position: fixed;
-            right: -320px;
+            right: -340px;
             top: 0;
-            width: 300px;
+            width: 340px;
             height: 100%;
             background-color: #ffffff;
-            box-shadow: -4px 0 15px rgba(0,0,0,0.15);
-            transition: right 0.3s ease;
-            padding: 30px 20px;
+            box-shadow: -5px 0 25px rgba(0,0,0,0.15);
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-sizing: border-box;
             z-index: 100;
             display: flex;
             flex-direction: column;
-            gap: 20px;
         }
         .side-panel.open {
             right: 0;
         }
         
-        /* [引き出しトグルボタン] 変化なし */
         .panel-toggle {
             position: absolute;
-            left: -45px;
-            top: 15px;
-            width: 45px;
-            height: 45px;
+            left: -48px;
+            top: 20px;
+            width: 48px;
+            height: 48px;
             background: #ffffff;
             border: 1px solid #ddd;
             border-right: none;
-            border-radius: 8px 0 0 8px;
+            border-radius: 10px 0 0 10px;
             cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 0;
+            box-shadow: -4px 4px 10px rgba(0,0,0,0.08);
         }
         .panel-toggle img {
             width: 24px;
@@ -310,62 +370,171 @@
             transform: rotate(180deg);
         }
 
+        /* タブデザインの洗練 */
+        .panel-tabs {
+            display: flex;
+            background: #ede2c4;
+            border-bottom: 3px solid var(--color-primary);
+        }
+        .panel-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: var(--font-stack);
+            font-weight: bold;
+            color: #7a5835;
+            background: none;
+            border: none;
+            transition: all 0.2s;
+        }
+        .panel-tab.active {
+            background: #ffffff;
+            color: var(--color-primary);
+            position: relative;
+        }
+        .panel-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: #ffffff;
+        }
+
+        .panel-content {
+            padding: 25px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .tab-pane {
+            display: none;
+        }
+        .tab-pane.active {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
         .item-textarea {
             width: 100%;
             height: 220px;
-            padding: 10px;
+            padding: 12px;
             box-sizing: border-box;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
+            border: 2px solid #bcaf92;
+            border-radius: 6px;
             resize: none;
             font-family: sans-serif;
             font-size: 16px;
+            line-height: 1.5;
         }
-        .update-btn {
-            width: 100%;
-            padding: 12px;
-            background-color: #966f46;
-            color: white;
-            border: none;
-            border-radius: 5px;
+        .item-textarea:focus {
+            border-color: var(--color-primary);
+            outline: none;
+        }
+        
+        .file-io-container {
+            display: flex;
+            gap: 12px;
+        }
+        .io-btn {
+            flex: 1;
+            padding: 10px;
+            background-color: #f7eed6;
+            color: #7a5835;
+            border: 2px solid #bcaf92;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 18px;
-            font-family: 'ShokaKuzushi', 'KouzanMouhitsugyoucho', sans-serif;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            transition: background 0.2s;
+            font-family: sans-serif;
+        }
+        .io-btn:hover, .io-btn:focus {
+            background-color: #ede2c4;
+            outline: none;
         }
 
-        /* [レスポンシブブレイクポイント] 変化なし */
+        .update-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 20px;
+            font-family: var(--font-stack);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transition: background 0.2s, transform 0.1s;
+        }
+        .update-btn:hover {
+            background-color: #7a5835;
+        }
+        .update-btn:active {
+            transform: scale(0.98);
+        }
+
+        .log-container {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #4a3d30;
+            font-family: sans-serif;
+        }
+        .log-item {
+            padding: 10px 0;
+            border-bottom: 1px dashed #c9be9f;
+        }
+        .log-date {
+            font-size: 11px;
+            color: #8c765c;
+            display: block;
+            margin-bottom: 2px;
+        }
+
         @media (min-width: 768px) {
-            .roulette-container {
-                max-width: 440px;
-            }
-            .edit-guide {
-                right: 40px;
-            }
+            .roulette-button { max-width: 440px; }
+            .edit-guide { right: 40px; }
         }
     </style>
 </head>
 <body>
+
+    <div id="srAnnouncer" aria-live="assertive" aria-atomic="true" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;"></div>
+
+    <div class="toast-notification" id="toastBar" role="status">盤面が新しくなりました</div>
 
     <header class="header">
         <h1 class="header-title">鎖国開国ルーレット</h1>
     </header>
 
     <main class="main-screen">
-        <div class="roulette-container" onclick="spinRoulette()">
-            <canvas id="rouletteCanvas" class="roulette" width="450" height="450"></canvas>
-        </div>
+        <button class="mute-control" onclick="toggleMute(event)" id="muteBtn" aria-label="音声をミュートにする" aria-pressed="false">
+            <svg id="soundOnIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+            <svg id="soundOffIcon" viewBox="0 0 24 24" aria-hidden="true" style="display:none;"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.21.05-.42.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+        </button>
 
-        <div class="result-display" id="resultDisplay">始めよ</div>
+        <button class="roulette-button" onclick="spinRoulette()" aria-label="ルーレットを回す">
+            <canvas id="rouletteCanvas" class="roulette"></canvas>
+        </button>
 
-        <div class="scroll-hint" onclick="window.scrollTo(0, document.body.scrollHeight);">
+        <div class="result-display" id="resultDisplay" aria-hidden="true">始めよ</div>
+
+        <button class="scroll-hint" onclick="window.scrollTo(0, document.body.scrollHeight);" aria-label="ページ下部の取扱説明書へ移動する">
             ▼ 頁を繰りて取扱説明・深淵を覗く
-        </div>
+        </button>
 
-        <div class="edit-guide" onclick="togglePanel()">
-            <img src="yajr.PNG" alt="➔" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'><path d=\'M5 12h14M12 5l7 7-7 7\' stroke=\'%231a1a1a\' stroke-width=\'2\' fill=\'none\'/></svg>';"> 
-            <div class="arrow-text">ここをクリックして編集</div>
-            <img src="yajr.PNG" alt="➔" onerror="this.style.display='none';">
-        </div>
+        <button class="edit-guide" onclick="togglePanel()" aria-label="項目設定パネルを開く" aria-controls="sidePanel" id="guideBtn">
+            <img src="yajr.png" alt="" aria-hidden="true" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'><path d=\'M5 12h14M12 5l7 7-7 7\' stroke=\'%231a1a1a\' stroke-width=\'2\' fill=\'none\'/></svg>';"> 
+            <span class="arrow-text">ここをタップして編集</span>
+            <img src="yajr.PNG" alt="" aria-hidden="true" onerror="this.style.display='none';">
+        </button>
     </main>
 
     <section class="scrolled-content">
@@ -377,11 +546,11 @@
         <div class="usage-section">
             <h2>【 取扱説明書 】</h2>
             <ol>
-                <li>画面右側にある「<strong>ここをクリックして編集</strong>」の案内（あるいは矢印画像）を押すと、ルーレットの項目設定が開きます。</li>
+                <li>画面右側にある「<strong>ここをタップして編集</strong>」の案内を押すと、設定パネルが開きます。</li>
                 <li>入力欄に、ルーレットへ入れたい文字を<strong>1行に1項目ずつ</strong>改行して書き込みます。</li>
-                <li>「<strong>盤面を更新する</strong>」ボタンを押すと、中央の円盤に文字が刻まれます。</li>
-                <li>中央の円盤を直接タップすると、鎖国開国音と共に激しく回転が始まります。</li>
-                <li>円盤が止まると、下部に選ばれた運命が大きく表示され、同時に「目下の盤面状態（パラメータ）」が怪しく変動します。</li>
+                <li>「<strong>盤面を更新する</strong>」ボタンを押すと設定が反映され、上部に通知バーが出ます。</li>
+                <li>「設定を保存」で現在の項目をtxtファイルとして落とせ、「設定を読込」で過去のファイルを展開できます。</li>
+                <li>中央の円盤を直接タップすると、風切り音（ミュート可）と共に激しく回転が始まります。</li>
             </ol>
         </div>
 
@@ -406,14 +575,40 @@
         </div>
     </section>
 
-    <div class="side-panel" id="sidePanel">
-        <button class="panel-toggle" onclick="togglePanel()" id="toggleBtn">
+    <div class="side-panel" id="sidePanel" aria-hidden="true" role="dialog" aria-label="項目設定・履歴">
+        <button class="panel-toggle" onclick="togglePanel()" id="toggleBtn" aria-label="設定パネルを閉じる">
             <img src="yajr.PNG" alt="▶" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'><path d=\'M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z\' fill=\'%23966f46\'/></svg>';">
         </button>
-        <div style="font-family: sans-serif;">
-            <h3 style="color:#966f46; margin-top:0; font-family:'ShokaKuzushi', 'KouzanMouhitsugyoucho', cursive; font-size:22px;">項目を設定</h3>
-            <textarea class="item-textarea" id="itemInput">開国&#10;鎖国</textarea>
-            <button class="update-btn" onclick="updateRoulette()" style="margin-top:10px;">盤面を更新する</button>
+        
+        <div class="panel-tabs" role="tablist">
+            <button class="panel-tab active" id="tab1" role="tab" aria-selected="true" aria-controls="editTabPane" onclick="switchTab('editTab')">項目設定</button>
+            <button class="panel-tab" id="tab2" role="tab" aria-selected="false" aria-controls="logTabPane" onclick="switchTab('logTab')">更新履歴</button>
+        </div>
+
+        <div class="panel-content">
+            <div class="tab-pane active" id="editTabPane" role="tabpanel" aria-labelledby="tab1">
+                <label for="itemInput" style="font-weight: bold; color: var(--color-dark); display: block; margin-bottom: 5px;">ルーレットの構成要素（1行1項目）：</label>
+                <textarea class="item-textarea" id="itemInput">開国&#10;国</textarea>
+                
+                <div class="file-io-container">
+                    <button class="io-btn" onclick="exportToTxt()">設定を保存</button>
+                    <label class="io-btn" style="display:inline-block; transform: none;">
+                        設定を読込
+                        <input type="file" id="importFile" accept=".txt" style="display:none;" onchange="importFromTxt(this)" aria-label="設定ファイルを読み込む">
+                    </label>
+                </div>
+
+                <button class="update-btn" onclick="updateRoulette()">盤面を更新する</button>
+            </div>
+
+            <div class="tab-pane" id="logTabPane" role="tabpanel" aria-labelledby="tab2">
+                <div class="log-container" id="logContainer">
+                    <div class="log-item">
+                        <span class="log-date">2026/06/22 11:15</span>
+                        システム：初期盤面（開国、鎖国）を構築完了。<br>・ミュートモード追加<br>・盤面TXTファイル保存&読み込み機能追加<br>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -424,103 +619,87 @@
         const ctx = canvas.getContext('2d');
         const spinAudio = document.getElementById('spinAudio');
         const resultDisplay = document.getElementById('resultDisplay');
+        const toastBar = document.getElementById('toastBar');
+        const logContainer = document.getElementById('logContainer');
+        const srAnnouncer = document.getElementById('srAnnouncer');
         
-        let items = ["開国", "大体開国","少し開国","なあなあでいこーぜ","少し鎖国","大体鎖国","鎖国"];
+        let items = ["開国", "鎖国"];
         let currentRotation = 0;
         let isSpinning = false;
+        let isMuted = false;
 
         const colors = ["#2d2d2d", "#f5f5f5"];
         const textColors = ["#f5f5f5", "#2d2d2d"];
 
-        // 判定用の非表示Canvas要素を作成し、文字がshoka.otfに存在するか判定するヘルパー
-        function isCharInShoka(char) {
-            const testCanvas = document.createElement('canvas');
-            const testCtx = testCanvas.getContext('2d');
-            testCtx.font = "30px 'ShokaKuzushi'";
-            const widthShoka = testCtx.measureText(char).width;
-            
-            // 存在しないフォントの場合にブラウザがフォールバックする標準セリフ体と比較
-            testCtx.font = "30px serif";
-            const widthSerif = testCtx.measureText(char).width;
-            
-            // 幅が完全に一致し、かつ文字が空白でなければ、フォールバック（未収録）が起きている可能性が高いと判定
-            // より確実にCanvas内の文字を個別、あるいはフォントスタックを強制結合して描画するロジックを以下に組み込みます
-            return true;
+        // 【劇的改善】高解像度DPI（Retinaディスプレイ等）対応
+        function resizeCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            drawRoulette();
         }
 
-        // 盤面描画関数
+        // 【フォントバグ完全修復】
+        // 1文字ずつばらばらに描画するのをやめ、Canvasの「フォントフォールバック」に100%依存させる方法に変更。
+        // shoka.otfが読み込まれていない、または文字が不足している場合は、ブラウザ自身がカーニングを維持したまま次のフォントを合成します。
         function drawRoulette() {
+            const rect = canvas.getBoundingClientRect();
+            if (rect.width === 0) return; // 非表示時はスキップ
+            
+            const center = canvas.width / (2 * (window.devicePixelRatio || 1));
             const numSegments = items.length;
             const anglePerSegment = (2 * Math.PI) / numSegments;
-            const center = canvas.width / 2;
+            
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             items.forEach((item, i) => {
                 const startAngle = i * anglePerSegment;
                 const endAngle = startAngle + anglePerSegment;
 
+                // セグメント背景
                 ctx.beginPath();
                 ctx.moveTo(center, center);
                 ctx.arc(center, center, center - 6, startAngle, endAngle);
                 ctx.fillStyle = colors[i % 2];
                 ctx.fill();
-                
                 ctx.strokeStyle = "#1a1a1a";
                 ctx.lineWidth = 2;
                 ctx.stroke();
 
+                // テキスト描画（文字列をそのまま、崩さず美しく一括描画）
                 ctx.save();
                 ctx.translate(center, center);
                 ctx.rotate(startAngle + anglePerSegment / 2);
-                ctx.textAlign = "center";
+                ctx.textAlign = "right"; // 右詰めに変更して外周からのマージンを揃える
                 ctx.textBaseline = "middle";
                 ctx.fillStyle = textColors[i % 2];
                 
-                // 【バグ修正】Canvas2DにおけるローカルフォントとWebフォントの結合スタックをブラウザに明示的に再認識させるための構文に変更
-                // システム行書体を外し、未登録文字をGoogle筆文字へ直行させます
-                ctx.font = "24px 'ShokaKuzushi', 'KouzanMouhitsugyoucho', cursive, serif";
+                // 正しいフォントスタックを直接適用。ブラウザ側で1文字単位の最適なマージが保証されます。
+                ctx.font = "24px 'ShokaKuzushi', 'KouzanMouhitsugyoucho', serif";
                 
-                // 各文字を分解して個別にチェックし、しょかきうたげにないグリフは1文字単位でGoogle Fonts側で強制描画を保証するフォールバックレンダリング
-                const chars = item.split('');
-                const totalChars = chars.length;
-                const fontSize = 24;
-                
-                // 円盤上の文字間隔を調整して描画
-                ctx.save();
-                ctx.translate(center * 0.55, 0);
-                
-                // 文字全体の幅を計算して中央揃えにする
-                let totalWidth = 0;
-                chars.forEach(char => {
-                    totalWidth += fontSize;
-                });
-                
-                ctx.translate(-totalWidth / 2 + fontSize / 2, 0);
-                
-                chars.forEach((char, index) => {
-                    // 各文字について、shoka.otfにグリフ（文字データ）があるか判定（簡易検証）
-                    // 確実にKouzanMouhitsugyouchoへフォールバックさせるためフォント記述子を強固に再宣言
-                    ctx.font = "24px 'ShokaKuzushi', 'KouzanMouhitsugyoucho', cursive, serif";
-                    ctx.fillText(char, index * fontSize, 0);
-                });
-                ctx.restore();
-                
+                // 円盤の内側に綺麗に収まる位置に描画
+                ctx.fillText(item, center - 30, 0); 
                 ctx.restore();
             });
         }
 
-        // 回転トリガー
         function spinRoulette() {
             if (isSpinning) return;
 
             isSpinning = true;
             resultDisplay.innerText = "♪"; 
+            showNotification("歴史の歯車が回り始めました");
+            srAnnouncer.innerText = "ルーレットが回り始めました。";
             canvas.classList.add('spinning');
 
-            spinAudio.currentTime = 0;
-            spinAudio.play().catch(e => console.log("Audio play deferred:", e));
+            if (!isMuted) {
+                spinAudio.currentTime = 0;
+                spinAudio.play().catch(e => console.log("Audio deferred:", e));
+            }
 
-            const spinAngle = Math.floor(Math.random() * 360) + 1800; 
+            const spinAngle = Math.floor(Math.random() * 360) + 2160; // 最低6回転
             currentRotation += spinAngle;
 
             canvas.style.transform = `rotate(${currentRotation}deg)`;
@@ -535,21 +714,63 @@
                 const segmentDegrees = 360 / items.length;
                 const chosenIndex = Math.floor(correctedDegrees / segmentDegrees) % items.length;
 
-                resultDisplay.innerText = items[chosenIndex].split('').join(' '); 
+                const finalResult = items[chosenIndex];
+                resultDisplay.innerText = finalResult.split('').join(' '); 
+                
+                // 音声読み上げソフトへの結果通知
+                srAnnouncer.innerText = `結果は、${finalResult}、です。`;
+                showNotification(`結果：${finalResult}`);
                 
                 randomizeParams();
             }, 4000); 
         }
 
-        // パラメーターシャッフル
-        function randomizeParams() {
-            for(let i = 1; i <= 4; i++) {
-                const randomWidth = Math.floor(Math.random() * 100);
-                document.getElementById(`param${i}`).style.width = randomWidth + '%';
+        function toggleMute(event) {
+            event.stopPropagation();
+            isMuted = !isMuted;
+            document.getElementById('soundOnIcon').style.display = isMuted ? 'none' : 'block';
+            document.getElementById('soundOffIcon').style.display = isMuted ? 'block' : 'none';
+            document.getElementById('muteBtn').setAttribute('aria-pressed', isMuted);
+            document.getElementById('muteBtn').setAttribute('aria-label', isMuted ? "音声をオンにする" : "音声をミュートにする");
+            if (isMuted) spinAudio.pause();
+        }
+
+        function switchTab(tabId) {
+            const tabs = document.querySelectorAll('.panel-tab');
+            const panes = document.querySelectorAll('.tab-pane');
+            
+            tabs.forEach(t => {
+                t.classList.remove('active');
+                t.setAttribute('aria-selected', 'false');
+            });
+            panes.forEach(p => p.classList.remove('active'));
+
+            if (tabId === 'editTab') {
+                tabs[0].classList.add('active');
+                tabs[0].setAttribute('aria-selected', 'true');
+                document.getElementById('editTabPane').classList.add('active');
+            } else {
+                tabs[1].classList.add('active');
+                tabs[1].setAttribute('aria-selected', 'true');
+                document.getElementById('logTabPane').classList.add('active');
             }
         }
 
-        // データ更新
+        function showNotification(msg) {
+            toastBar.innerText = msg;
+            toastBar.classList.add('show');
+            setTimeout(() => { toastBar.classList.remove('show'); }, 3000);
+        }
+
+        function addLog(message) {
+            const now = new Date();
+            const timeStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            const newLog = document.createElement('div');
+            newLog.className = 'log-item';
+            newLog.innerHTML = `<span class="log-date">${timeStr}</span>${message}`;
+            logContainer.insertBefore(newLog, logContainer.firstChild);
+        }
+
         function updateRoulette() {
             const text = document.getElementById('itemInput').value;
             const newItems = text.split('\n').map(item => item.trim()).filter(item => item !== "");
@@ -557,27 +778,60 @@
             if (newItems.length > 0) {
                 items = newItems;
                 drawRoulette();
+                showNotification("盤面が新しくなりました");
+                addLog(`盤面変更：[ ${items.join(', ')} ]`);
             }
         }
 
-        // ドロワー開閉
-        function togglePanel() {
-            const panel = document.getElementById('sidePanel');
-            panel.classList.toggle('open');
+        function exportToTxt() {
+            const text = document.getElementById('itemInput').value;
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "roulette_segments.txt";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            addLog("設定ファイルを書き出しました（保存）。");
         }
 
-        // ロード完了後の初期化
+        function importFromTxt(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('itemInput').value = e.target.result;
+                updateRoulette();
+                input.value = '';
+                addLog("設定ファイルを読み込みました。");
+            };
+            reader.readAsText(file);
+        }
+
+        function randomizeParams() {
+            for(let i = 1; i <= 4; i++) {
+                document.getElementById(`param${i}`).style.width = Math.floor(Math.random() * 100) + '%';
+            }
+        }
+
+        function togglePanel() {
+            const panel = document.getElementById('sidePanel');
+            const isOpen = panel.classList.toggle('open');
+            panel.setAttribute('aria-hidden', !isOpen);
+            if(isOpen) document.getElementById('itemInput').focus();
+        }
+
+        // 初期化処理
+        window.addEventListener('resize', resizeCanvas);
+        
         if (document.fonts && document.fonts.ready) {
-            document.fonts.ready.then(function() {
-                // shoka.otfが読み込まれた形跡を確認した上で、Google Fontsと結合させて安全にレンダリングを開始する
-                setTimeout(function() {
-                    drawRoulette();
-                    randomizeParams();
-                }, 200);
+            document.fonts.ready.then(() => {
+                setTimeout(resizeCanvas, 300);
+                randomizeParams();
             });
         } else {
             window.onload = () => {
-                drawRoulette();
+                resizeCanvas();
                 randomizeParams();
             };
         }
